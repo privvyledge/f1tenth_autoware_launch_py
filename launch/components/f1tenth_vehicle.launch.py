@@ -27,21 +27,38 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def launch_setup(context, *args, **kwargs):
-    vehicle_launch_pkg = LaunchConfiguration("vehicle_model").perform(context) + "_launch"
-    config_dir = PathJoinSubstitution([FindPackageShare(LaunchConfiguration("sensor_model").perform(context) + "_description"), "config"]).perform(context)
-    model_file = PathJoinSubstitution([FindPackageShare("tier4_vehicle_launch"), "urdf", "vehicle.xacro"]).perform(context)
-    vehicle_model = LaunchConfiguration("vehicle_model").perform(context)
-    sensor_model = LaunchConfiguration("sensor_model").perform(context)
+    vehicle_launch_pkg = LaunchConfiguration('vehicle_model').perform(context) + '_launch'
+    config_dir = PathJoinSubstitution([FindPackageShare(LaunchConfiguration('sensor_model').perform(context) + '_description'), 'config']).perform(context)
+    vehicle_model_file = PathJoinSubstitution([FindPackageShare('tier4_vehicle_launch'), 'urdf', 'vehicle.xacro']).perform(context)
+    amcl_model_file = PathJoinSubstitution([FindPackageShare('f1tenth_sensor_kit_description'), 'urdf', 'amcl.xacro']).perform(context)
+    
+    vehicle_model = LaunchConfiguration('vehicle_model').perform(context)
+    sensor_model = LaunchConfiguration('sensor_model').perform(context)
     
     vehicle_description_node = Node(
-        name="robot_state_publisher",
-        namespace="",
-        package="robot_state_publisher",
-        executable="robot_state_publisher",
+        name='robot_state_publisher',
+        namespace='',
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
         parameters=[
             {
-            "robot_description": ParameterValue(Command([
-                f"xacro {model_file} vehicle_model:={vehicle_model} sensor_model:={sensor_model} config_dir:={config_dir}"
+            'robot_description': ParameterValue(Command([
+                f'xacro {vehicle_model_file} vehicle_model:={vehicle_model} sensor_model:={sensor_model} config_dir:={config_dir}'
+                ]), value_type=str)
+            }
+        ]
+    )
+    
+    # two TF trees are needed - laser link has to be separated from the rest of the vehicle
+    amcl_description_node = Node(
+        name='amcl_state_publisher',
+        namespace='',
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        parameters=[
+            {
+            'robot_description': ParameterValue(Command([
+                f'xacro {amcl_model_file}'
                 ]), value_type=str)
             }
         ]
@@ -50,14 +67,17 @@ def launch_setup(context, *args, **kwargs):
     vehicle_interface_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             launch_file_path=PathJoinSubstitution([
-                FindPackageShare(vehicle_launch_pkg), "launch", "vehicle_interface.launch.py"
+                FindPackageShare(vehicle_launch_pkg), 'launch', 'vehicle_interface.launch.py'
             ]),
         ),
-        condition=IfCondition(LaunchConfiguration("launch_vehicle_interface"))
+        launch_arguments={
+            }.items(),
+        condition=IfCondition(LaunchConfiguration('launch_vehicle_interface'))
     )
 
     return [
         vehicle_description_node,
+        amcl_description_node,
         vehicle_interface_launch
     ]
 
@@ -65,14 +85,14 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     declared_arguments = []
     
-    def add_launch_arg(name: str, default_value=None):
+    def add_launch_arg(name: str, default_value: str = None):
         declared_arguments.append(
             DeclareLaunchArgument(name, default_value=default_value)
         )
     
-    add_launch_arg("vehicle_model", "true")
-    add_launch_arg("sensor_model", "f1tenth_sensor_kit")
-    add_launch_arg("launch_vehicle_interface", "true")
+    add_launch_arg('vehicle_model', 'true')
+    add_launch_arg('sensor_model', 'f1tenth_sensor_kit')
+    add_launch_arg('launch_vehicle_interface', 'true')
 
     return LaunchDescription([
         *declared_arguments,

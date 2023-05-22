@@ -53,7 +53,7 @@ def launch_setup(context, *args, **kwargs):
                 ComposableNode(
                     package='autoware_iv_external_api_adaptor',
                     plugin='external_api::RTCController',
-                    name='node'
+                    name='external_api_adaptor'
                     )
             ]
     )
@@ -82,7 +82,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     declared_arguments = []
     
-    def add_launch_arg(name: str, default_value=None):
+    def add_launch_arg(name: str, default_value: str = None):
         declared_arguments.append(
             DeclareLaunchArgument(name, default_value=default_value)
         )

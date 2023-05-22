@@ -25,22 +25,16 @@ from launch_ros.actions import PushRosNamespace
 
 
 def launch_setup(context, *args, **kwargs):
-    sensor_launch_pkg = LaunchConfiguration("sensor_model").perform(context) + "_launch"
-    
+    sensor_launch_pkg = LaunchConfiguration('sensor_model').perform(context) + '_launch'
+
     sensing_launch = GroupAction([
-        PushRosNamespace("sensing"),
+        PushRosNamespace('sensing'),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 launch_file_path=PathJoinSubstitution([
-                    FindPackageShare(sensor_launch_pkg), "launch", "sensing.launch.py"
+                    FindPackageShare(sensor_launch_pkg), 'launch', 'sensing.launch.py'
                 ]),
-            ),
-            launch_arguments={
-                "container_name": LaunchConfiguration("container_name"),
-                "use_laser_container": LaunchConfiguration("use_laser_container"),
-                "use_multithread": LaunchConfiguration("use_multithread"),
-                "use_intra_process": LaunchConfiguration("use_intra_process"),
-            }.items()
+            )
         )
     ])
 
@@ -51,17 +45,13 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     declared_arguments = []
-    
-    def add_launch_arg(name: str, default_value=None):
+
+    def add_launch_arg(name: str, default_value: str = None):
         declared_arguments.append(
             DeclareLaunchArgument(name, default_value=default_value)
         )
-    
-    add_launch_arg("sensor_model")
-    add_launch_arg("container_name", "hokuyo_node_container")
-    add_launch_arg("use_laser_container", "false")
-    add_launch_arg("use_multithread", "false")
-    add_launch_arg("use_intra_process", "false")
+
+    add_launch_arg('sensor_model')
 
     return LaunchDescription([
         *declared_arguments,

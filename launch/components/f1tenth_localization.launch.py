@@ -14,93 +14,171 @@
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.actions import GroupAction
 from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
+from launch.actions import TimerAction
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch.launch_description_sources import FrontendLaunchDescriptionSource
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.actions import Node
+from launch_ros.actions import PushRosNamespace
 
 
 def launch_setup(context, *args, **kwargs):
-    pkg_prefix = FindPackageShare("f1tenth_launch")
-    nav2_pkg_prefix = FindPackageShare("nav2_bringup")
+    pkg_prefix = FindPackageShare('f1tenth_launch')
+    nav2_pkg_prefix = FindPackageShare('nav2_bringup')
 
     localization_param_file = PathJoinSubstitution(
-        [pkg_prefix, "config/localization/amcl.param.yaml"])
+        [pkg_prefix, 'config/localization/amcl.param.yaml'])
+    
+    ekf_param_file = PathJoinSubstitution(
+        [pkg_prefix, 'config/localization/ekf_localizer.param.yaml'])
 
-    nav2_localization = IncludeLaunchDescription(
+    nav2_localization_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             launch_file_path=PathJoinSubstitution([
-                nav2_pkg_prefix, "launch", "localization_launch.py"
+                nav2_pkg_prefix, 'launch', 'localization_launch.py'
             ]),
         ),
         launch_arguments={
-            "params_file": localization_param_file,
-            "map": LaunchConfiguration("map_yaml"),
+            'params_file': localization_param_file,
+            'map': LaunchConfiguration('map_yaml')
         }.items()
     )
 
     gyro_odometer_launch = IncludeLaunchDescription(
         FrontendLaunchDescriptionSource(
             launch_file_path=PathJoinSubstitution([
-                FindPackageShare("gyro_odometer"), "launch", "gyro_odometer.launch.xml"
+                FindPackageShare('gyro_odometer'), 'launch', 'gyro_odometer.launch.xml'
             ]),
         ),
         launch_arguments={
-            "input_vehicle_twist_with_covariance_topic": "/sensing/vehicle_velocity_converter/twist_with_covariance",
-            "input_imu_topic": "/sensing/vesc/imu",
-            "output_twist_with_covariance_topic": "/localization/twist_estimator/twist_with_covariance",
-            "output_twist_with_covariance_raw_topic": "/localization/twist_estimator/twist_with_covariance_raw",
-            "output_twist_topic": "/localization/twist_estimator/twist",
-            "output_twist_raw_topic": "/localization/twist_estimator/twist_raw"
+            'input_vehicle_twist_with_covariance_topic': '/sensing/vehicle_velocity_converter/twist_with_covariance',
+            'input_imu_topic': '/sensing/imu_corrector/imu',
+            'output_twist_with_covariance_topic': 'twist_estimator/twist_with_covariance',
+            'output_twist_with_covariance_raw_topic': 'twist_estimator/twist_with_covariance_raw',
+            'output_twist_topic': 'twist_estimator/twist',
+            'output_twist_raw_topic': 'twist_estimator/twist_raw'
         }.items()
     )
 
-    twist_to_odom_node = Node(
-        name="twist_to_odom_node",
-        namespace="localization",
-        package="twist_to_odom",
-        executable="twist_to_odom_node_exe",
-        parameters=[
-            {
-                "publish_tf": True,
-            }
-        ],
-        remappings=[
-            ("twist_with_covariance", "/localization/twist_estimator/twist_with_covariance"),
-            ("odometry", "/localization/odometry")
-        ],
-        output="screen",
+    twist2odom_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            launch_file_path=PathJoinSubstitution([
+                FindPackageShare('twist2odom'), 'launch', 'twist2odom.launch.py'
+            ]),
+        ),
+        launch_arguments={
+            'publish_tf': 'true',
+            'in_twist': 'twist_estimator/twist_with_covariance',
+            'out_odom': 'odometry',
+            'base_frame_id': 'base_footprint',
+            'odom_frame_id': 'odom'
+        }.items()
+    )
+    
+    ekf_launch = IncludeLaunchDescription(
+        FrontendLaunchDescriptionSource(
+            launch_file_path=PathJoinSubstitution([
+                FindPackageShare('ekf_localizer'), 'launch', 'ekf_localizer.launch.xml'
+            ]),
+        ),
+        launch_arguments={
+            'input_initial_pose_name': '/initialpose',
+            'input_pose_with_cov_name': '/amcl_pose',
+            'input_twist_with_cov_name': 'twist_estimator/twist_with_covariance',
+            'output_odom_name': 'pose_twist_fusion_filter/kinematic_state',
+            'output_pose_name': 'pose_twist_fusion_filter/pose',
+            'output_pose_with_covariance_name': 'pose_twist_fusion_filter/pose_with_covariance',
+            'output_biased_pose_name': 'pose_twist_fusion_filter/biased_pose',
+            'output_biased_pose_with_covariance_name': 'pose_twist_fusion_filter/biased_pose_with_covariance',
+            'output_twist_name': 'pose_twist_fusion_filter/twist',
+            'output_twist_with_covariance_name': 'pose_twist_fusion_filter/twist_with_covariance',
+            'param_file': ekf_param_file
+        }.items()
     )
 
-    # map_to_odom_tf_publisher = Node(
-    #     package="tf2_ros",
-    #     executable="static_transform_publisher",
-    #     name="static_map_to_odom_tf_publisher",
-    #     output="screen",
-    #     arguments=["0.0", "0.0", "0.0", "0.0", "0.0", "0.0", "map", "odom"],
-    # )
+    stop_filter_launch = IncludeLaunchDescription(
+        FrontendLaunchDescriptionSource(
+            launch_file_path=PathJoinSubstitution([
+                FindPackageShare('stop_filter'), 'launch', 'stop_filter.launch.xml'
+            ]),
+        ),
+        launch_arguments={
+            'use_twist_with_covariance': 'true',
+            'input_odom_name': 'pose_twist_fusion_filter/kinematic_state',
+            'input_twist_with_covariance_name': 'pose_twist_fusion_filter/twist_with_covariance',
+            'output_odom_name': 'kinematic_state',
+        }.items()
+    )
+
+    twist2accel_launch = IncludeLaunchDescription(
+        FrontendLaunchDescriptionSource(
+            launch_file_path=PathJoinSubstitution([
+                FindPackageShare('twist2accel'), 'launch', 'twist2accel.launch.xml'
+            ]),
+        ),
+        launch_arguments={
+            'use_odom': 'true',
+            'in_odom': 'kinematic_state',
+            'in_twist': 'twist_estimator/twist_with_covariance',
+            'out_accel': 'acceleration',
+        }.items()
+    )
+    
+    # required by Autoware API, temporary workaround
+    init_state = Node(
+        package='f1tenth_launch',
+        executable='init_state.sh',
+        name='init_state',
+        namespace='localization',
+        arguments=['--ros-args', '--disable-stdout-logs']
+    )
+    
+    localization_trigger = Node(
+        package='f1tenth_launch',
+        executable='localization_trigger.sh',
+        name='localization_trigger',
+        namespace='localization',
+        arguments=['--ros-args', '--disable-stdout-logs']
+    )
+    
+    delayed_localization_trigger = TimerAction(
+        period=5.0,
+        actions=[localization_trigger]
+    )
+        
+    group = GroupAction(
+        [
+            PushRosNamespace('localization'),
+            gyro_odometer_launch,
+            twist2odom_launch,
+            ekf_launch,
+            stop_filter_launch,
+            twist2accel_launch,
+        ]
+    )
 
     return [
-        gyro_odometer_launch,
-        twist_to_odom_node,
-        nav2_localization,
-        # map_to_odom_tf_publisher
+        nav2_localization_launch,
+        group,
+        init_state,
+        # delayed_localization_trigger
     ]
 
 
 def generate_launch_description():
     declared_arguments = []
 
-    def add_launch_arg(name: str, default_value=None):
+    def add_launch_arg(name: str, default_value: str = None):
         declared_arguments.append(
             DeclareLaunchArgument(name, default_value=default_value)
         )
 
-    add_launch_arg("map_yaml", "imola.yaml")
+    add_launch_arg('map_yaml', 'imola.yaml')
 
     return LaunchDescription([
         *declared_arguments,
