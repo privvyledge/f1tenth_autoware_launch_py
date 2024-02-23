@@ -12,7 +12,7 @@ Check external links for dependencies.
 
 ```bash
 rosdep install --from-paths src --ignore-src -y
-colcon build --symlink-install --packages-up-to f1tenth_launch
+colcon build --symlink-install --packages-up-to f1tenth_autoware_launch_py
 ```
 
 ## Usage
@@ -23,7 +23,7 @@ colcon build --symlink-install --packages-up-to f1tenth_launch
 1. Run F1TENTH AWSIM simulator.
 2. Run launch file:
 ```bash
-ros2 launch f1tenth_launch f1tenth.launch.py map_path:=autoware_map/imola
+ros2 launch f1tenth_autoware_launch_py f1tenth.launch.py map_path:=autoware_map/imola
 ```
 
 ## References / External links
