@@ -18,6 +18,7 @@ from launch.actions import GroupAction
 from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
@@ -30,9 +31,9 @@ def launch_setup(context, *args, **kwargs):
     sensing_launch = GroupAction([
         PushRosNamespace('sensing'),
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
+            XMLLaunchDescriptionSource(
                 launch_file_path=PathJoinSubstitution([
-                    FindPackageShare(sensor_launch_pkg), 'launch', 'sensing.launch.py'
+                    FindPackageShare(sensor_launch_pkg), 'launch', 'sensing.launch.xml'
                 ]),
             )
         )
