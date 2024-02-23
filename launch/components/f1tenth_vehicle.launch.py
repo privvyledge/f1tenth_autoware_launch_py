@@ -18,6 +18,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_xml.launch_description_sources import XMLLaunchDescriptionSource
 from launch.substitutions import Command
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
@@ -30,7 +31,7 @@ def launch_setup(context, *args, **kwargs):
     vehicle_launch_pkg = LaunchConfiguration('vehicle_model').perform(context) + '_launch'
     config_dir = PathJoinSubstitution([FindPackageShare(LaunchConfiguration('sensor_model').perform(context) + '_description'), 'config']).perform(context)
     vehicle_model_file = PathJoinSubstitution([FindPackageShare('tier4_vehicle_launch'), 'urdf', 'vehicle.xacro']).perform(context)
-    amcl_model_file = PathJoinSubstitution([FindPackageShare('f1tenth_sensor_kit_description'), 'urdf', 'amcl.xacro']).perform(context)
+    # amcl_model_file = PathJoinSubstitution([FindPackageShare('f1tenth_sensor_kit_description'), 'urdf', 'amcl.xacro']).perform(context)
     
     vehicle_model = LaunchConfiguration('vehicle_model').perform(context)
     sensor_model = LaunchConfiguration('sensor_model').perform(context)
@@ -50,19 +51,19 @@ def launch_setup(context, *args, **kwargs):
     )
     
     # two TF trees are needed - laser link has to be separated from the rest of the vehicle
-    amcl_description_node = Node(
-        name='amcl_state_publisher',
-        namespace='',
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        parameters=[
-            {
-            'robot_description': ParameterValue(Command([
-                f'xacro {amcl_model_file}'
-                ]), value_type=str)
-            }
-        ]
-    )
+    # amcl_description_node = Node(
+    #     name='amcl_state_publisher',
+    #     namespace='',
+    #     package='robot_state_publisher',
+    #     executable='robot_state_publisher',
+    #     parameters=[
+    #         {
+    #         'robot_description': ParameterValue(Command([
+    #             f'xacro {amcl_model_file}'
+    #             ]), value_type=str)
+    #         }
+    #     ]
+    # )
     
     vehicle_interface_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -77,7 +78,7 @@ def launch_setup(context, *args, **kwargs):
 
     return [
         vehicle_description_node,
-        amcl_description_node,
+        # amcl_description_node,
         vehicle_interface_launch
     ]
 
