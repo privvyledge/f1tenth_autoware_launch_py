@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(f1tenth_launch)
+project(f1tenth_autoware_launch_py)
 
 find_package(ament_cmake_auto REQUIRED)
 

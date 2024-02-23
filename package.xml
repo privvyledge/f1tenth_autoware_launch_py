@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>f1tenth_launch</name>
+  <name>f1tenth_autoware_launch_py</name>
   <version>1.0.0</version>
   <description>F1TENTH launch package.</description>
-  <maintainer email="amadeusz.szymko@put.poznan.pl">Amadeusz Szymko</maintainer>
+  <maintainer email="bso19a@fsu.edu">Boluwatife Olabiran</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
