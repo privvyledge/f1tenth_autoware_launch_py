@@ -25,7 +25,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def launch_setup(context, *args, **kwargs):
-    pkg_prefix = FindPackageShare('f1tenth_launch')
+    pkg_prefix = FindPackageShare('f1tenth_autoware_launch_py')
     rviz_config = PathJoinSubstitution([pkg_prefix, 'rviz', LaunchConfiguration('rviz_config')])
     map_path = PathJoinSubstitution(['/home', EnvironmentVariable('USER', default_value='user'), 'autoware_map', LaunchConfiguration('map_name')])
     map_yaml = PathJoinSubstitution([map_path, LaunchConfiguration('map_name').perform(context) + '.yaml'])

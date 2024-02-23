@@ -23,7 +23,7 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def launch_setup(context, *args, **kwargs):
-    cfg_pkg_prefix = FindPackageShare('f1tenth_launch')
+    cfg_pkg_prefix = FindPackageShare('f1tenth_autoware_launch_py')
 
     system_launch = IncludeLaunchDescription(
         FrontendLaunchDescriptionSource(

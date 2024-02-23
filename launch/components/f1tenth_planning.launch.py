@@ -128,7 +128,7 @@ def launch_setup(context, *args, **kwargs):
 
     # required by freespace planner, temporary workaround
     scenario = Node(
-        package='f1tenth_launch',
+        package='f1tenth_autoware_launch_py',
         executable='scenario.sh',
         name='scenario',
         namespace='planning',

@@ -28,7 +28,7 @@ from launch_ros.actions import PushRosNamespace
 
 
 def launch_setup(context, *args, **kwargs):
-    pkg_prefix = FindPackageShare('f1tenth_launch')
+    pkg_prefix = FindPackageShare('f1tenth_autoware_launch_py')
     nav2_pkg_prefix = FindPackageShare('nav2_bringup')
 
     localization_param_file = PathJoinSubstitution(
@@ -131,7 +131,7 @@ def launch_setup(context, *args, **kwargs):
     
     # required by Autoware API, temporary workaround
     init_state = Node(
-        package='f1tenth_launch',
+        package='f1tenth_autoware_launch_py',
         executable='init_state.sh',
         name='init_state',
         namespace='localization',
@@ -139,7 +139,7 @@ def launch_setup(context, *args, **kwargs):
     )
     
     localization_trigger = Node(
-        package='f1tenth_launch',
+        package='f1tenth_autoware_launch_py',
         executable='localization_trigger.sh',
         name='localization_trigger',
         namespace='localization',

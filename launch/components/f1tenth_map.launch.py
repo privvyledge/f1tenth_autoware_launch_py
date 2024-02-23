@@ -32,7 +32,7 @@ def launch_setup(context, *args, **kwargs):
     lanelet2_map_path = PathJoinSubstitution([LaunchConfiguration('map_path'), 'lanelet2_map.osm'])
 
     lanelet2_map_loader_param_path = PathJoinSubstitution(
-        [FindPackageShare('f1tenth_launch'),
+        [FindPackageShare('f1tenth_autoware_launch_py'),
          'config/map/lanelet2_map_loader.param.yaml']).perform(context)
 
     with open(lanelet2_map_loader_param_path, 'r') as f:
